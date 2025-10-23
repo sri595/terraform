@@ -1,5 +1,5 @@
 def handler(event, context):
     return {
         "statusCode": 200,
-        "body": "Hello from Python Lambda (deployed by Terraform)!"
+        "body": "Hello from Python Lambda (deployed by Terraform New)!"
     }
