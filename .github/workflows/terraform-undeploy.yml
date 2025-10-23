@@ -1,4 +1,4 @@
-name: Terraform Destroy
+name: Terraform Destroy Lambda & API Gateway
 
 on:
   workflow_dispatch: # Manual trigger from GitHub UI
@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # Step 1: Checkout the repo
+    # Step 1: Checkout repo
     - name: Checkout repo
       uses: actions/checkout@v3
 
@@ -18,7 +18,7 @@ jobs:
       with:
         terraform_version: 1.6.0
 
-    # Step 3: Setup Python (required for Lambda packaging if needed)
+    # Step 3: Setup Python (required for Lambda packaging)
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
@@ -40,10 +40,16 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
-    # Step 6: Initialize Terraform
+    # Step 6: Package Lambda again (needed for terraform destroy)
+    - name: Package Lambda for destroy
+      run: |
+        cd lambda_src
+        zip -r ../lambda_src/lambda.zip .
+
+    # Step 7: Terraform Init
     - name: Terraform Init
       run: terraform init
 
-    # Step 7: Destroy Terraform infrastructure
+    # Step 8: Terraform Destroy
     - name: Terraform Destroy
       run: terraform destroy -auto-approve
