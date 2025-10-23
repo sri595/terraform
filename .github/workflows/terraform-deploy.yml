@@ -3,31 +3,39 @@ name: Terraform Lambda Deploy
 on:
   push:
     branches:
-      - main  # Workflow triggers on push to main branch
+      - main       # Trigger workflow on push to main branch
+  workflow_dispatch: # Allows manual trigger
 
 jobs:
   terraform:
     runs-on: ubuntu-latest
 
     steps:
+    # Step 1: Checkout the repo
     - name: Checkout repo
       uses: actions/checkout@v3
 
+    # Step 2: Setup Terraform
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
       with:
         terraform_version: 1.6.0
 
+    # Step 3: Setup Python
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
         python-version: 3.11
 
-    - name: Install zip & AWS CLI
+    # Step 4: Install zip, unzip & AWS CLI
+    - name: Install zip, unzip & AWS CLI
       run: |
         sudo apt-get update
-        sudo apt-get install zip awscli -y
+        sudo apt-get install -y zip unzip python3-pip
+        pip3 install awscli --upgrade --user
+        export PATH=$PATH:~/.local/bin
 
+    # Step 5: Configure AWS credentials
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
@@ -35,13 +43,16 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
+    # Step 6: Package Lambda function
     - name: Package Lambda
       run: |
         cd lambda_src
         zip -r ../lambda.zip .
 
+    # Step 7: Initialize Terraform
     - name: Terraform Init
       run: terraform init
 
+    # Step 8: Apply Terraform
     - name: Terraform Apply
       run: terraform apply -auto-approve
