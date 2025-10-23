@@ -4,23 +4,27 @@ on:
   workflow_dispatch: # Manual trigger from GitHub UI
 
 jobs:
-  terraform-destroy:
+  destroy:
     runs-on: ubuntu-latest
 
     steps:
+    # Step 1: Checkout the repo
     - name: Checkout repo
       uses: actions/checkout@v3
 
+    # Step 2: Setup Terraform
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v2
       with:
         terraform_version: 1.6.0
 
+    # Step 3: Setup Python (required for Lambda packaging if needed)
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
         python-version: 3.11
 
+    # Step 4: Install zip, unzip & AWS CLI
     - name: Install zip, unzip & AWS CLI
       run: |
         sudo apt-get update
@@ -28,6 +32,7 @@ jobs:
         pip3 install awscli --upgrade --user
         export PATH=$PATH:~/.local/bin
 
+    # Step 5: Configure AWS credentials
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v2
       with:
@@ -35,5 +40,10 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: ${{ secrets.AWS_REGION }}
 
+    # Step 6: Initialize Terraform
+    - name: Terraform Init
+      run: terraform init
+
+    # Step 7: Destroy Terraform infrastructure
     - name: Terraform Destroy
       run: terraform destroy -auto-approve
